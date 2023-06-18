@@ -3,9 +3,9 @@ const path = require('path');
 const express = require('express');
 const bodyParser = require('body-parser');
 
-const LocalStorage = require('node-localstorage').LocalStorage;
+const localStorage = require('localStorage');
 
-const localStorage = new LocalStorage('./scratch');
+const store = require('store2');
 
 const app = express();
 
@@ -33,16 +33,35 @@ app.post('/login', (req, res, next) => {
 });
 
 app.get('/', (req, res, next) => {
-  console.log(localStorage.getItem('username'));
-  res.sendFile(path.join(__dirname, 'views', 'chat.html'));
+  //   console.log(localStorage.getItem('username'));
+  if (localStorage.getItem('username') === null) {
+    res.redirect('/login');
+  } else {
+    // res.send(localStorage.getItem('messages'));
+    // res.sendFile(path.join(__dirname, 'views', 'chat.html'));
+    let msg = '';
+    if (store('messages') !== null) {
+      msg = store('messages');
+    }
+    res.send(`${msg}<main>
+      <h1>Chat Page</h1>
+      <form action="/send" method="POST">
+        <label for="message">Enter Your Message</label>
+        <input type="text" name="message" id="message" />
+        <button type="submit">Send</button>
+      </form>
+      <p></p>
+    </main>`);
+    // res.sendFile(path.join(__dirname, 'views', 'chat.html'));
+  }
 });
 
 app.post('/send', (req, res, next) => {
   try {
     messages.push(`{${localStorage.getItem('username')}:${req.body.message}}`);
-    console.log(messages);
-    localStorage.setItem('messages', messages);
-    res.redirect('/', { messages: localStorage.getItem('messages') });
+    // console.log(messages);
+    store('messages', messages);
+    res.redirect('/');
   } catch (error) {
     console.log(error);
   }
